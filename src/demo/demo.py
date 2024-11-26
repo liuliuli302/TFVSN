@@ -51,6 +51,7 @@ model.eval()
 tokenizer.padding_side = "left"
 tokenizer.eos_token = "<|end|>"
 
+# print(model)
 
 for sample in data:
     image_list = []

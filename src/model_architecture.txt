@@ -1,0 +1,95 @@
+XGenMMModelForConditionalGeneration(
+  (vlm): XGenMMPerceiver(
+    (vision_encoder): SiglipVisionTransformer(
+      (embeddings): SiglipVisionEmbeddings(
+        (patch_embedding): Conv2d(3, 1152, kernel_size=(14, 14), stride=(14, 14), padding=valid)
+        (position_embedding): Embedding(729, 1152)
+      )
+      (encoder): SiglipEncoder(
+        (layers): ModuleList(
+          (0-26): 27 x SiglipEncoderLayer(
+            (self_attn): SiglipSdpaAttention(
+              (k_proj): Linear(in_features=1152, out_features=1152, bias=True)
+              (v_proj): Linear(in_features=1152, out_features=1152, bias=True)
+              (q_proj): Linear(in_features=1152, out_features=1152, bias=True)
+              (out_proj): Linear(in_features=1152, out_features=1152, bias=True)
+            )
+            (layer_norm1): LayerNorm((1152,), eps=1e-06, elementwise_affine=True)
+            (mlp): SiglipMLP(
+              (activation_fn): PytorchGELUTanh()
+              (fc1): Linear(in_features=1152, out_features=4304, bias=True)
+              (fc2): Linear(in_features=4304, out_features=1152, bias=True)
+            )
+            (layer_norm2): LayerNorm((1152,), eps=1e-06, elementwise_affine=True)
+          )
+        )
+      )
+      (post_layernorm): LayerNorm((1152,), eps=1e-06, elementwise_affine=True)
+      (head): SiglipMultiheadAttentionPoolingHead(
+        (attention): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=1152, out_features=1152, bias=True)
+        )
+        (layernorm): LayerNorm((1152,), eps=1e-06, elementwise_affine=True)
+        (mlp): SiglipMLP(
+          (activation_fn): PytorchGELUTanh()
+          (fc1): Linear(in_features=1152, out_features=4304, bias=True)
+          (fc2): Linear(in_features=4304, out_features=1152, bias=True)
+        )
+      )
+    )
+    (vision_tokenizer): PerceiverResampler(
+      (projection): Linear(in_features=1152, out_features=3072, bias=True)
+      (layers): ModuleList(
+        (0-5): 6 x ModuleList(
+          (0): PerceiverAttention(
+            (norm_media): LayerNorm((1152,), eps=1e-05, elementwise_affine=True)
+            (norm_latents): LayerNorm((1152,), eps=1e-05, elementwise_affine=True)
+            (to_q): Linear(in_features=1152, out_features=1536, bias=False)
+            (to_kv): Linear(in_features=1152, out_features=3072, bias=False)
+            (to_out): Linear(in_features=1536, out_features=1152, bias=False)
+          )
+          (1): Sequential(
+            (0): LayerNorm((1152,), eps=1e-05, elementwise_affine=True)
+            (1): Linear(in_features=1152, out_features=4608, bias=False)
+            (2): GELU(approximate='none')
+            (3): Linear(in_features=4608, out_features=1152, bias=False)
+          )
+        )
+      )
+      (norm): LayerNorm((1152,), eps=1e-05, elementwise_affine=True)
+    )
+    (lang_model): Phi3ForCausalLM(
+      (model): Phi3Model(
+        (embed_tokens): DecoupledEmbedding(
+          num_original_embeddings=32012, num_additional_embeddings=3, embedding_dim=3072, partially_freeze=True
+          (additional_embedding): Embedding(3, 3072)
+        )
+        (embed_dropout): Dropout(p=0.0, inplace=False)
+        (layers): ModuleList(
+          (0-31): 32 x Phi3DecoderLayer(
+            (self_attn): Phi3SdpaAttention(
+              (o_proj): Linear(in_features=3072, out_features=3072, bias=False)
+              (qkv_proj): Linear(in_features=3072, out_features=9216, bias=False)
+              (rotary_emb): Phi3RotaryEmbedding()
+            )
+            (mlp): Phi3MLP(
+              (gate_up_proj): Linear(in_features=3072, out_features=16384, bias=False)
+              (down_proj): Linear(in_features=8192, out_features=3072, bias=False)
+              (activation_fn): SiLU()
+            )
+            (input_layernorm): Phi3RMSNorm((3072,), eps=1e-05)
+            (resid_attn_dropout): Dropout(p=0.0, inplace=False)
+            (resid_mlp_dropout): Dropout(p=0.0, inplace=False)
+            (post_attention_layernorm): Phi3RMSNorm((3072,), eps=1e-05)
+          )
+        )
+        (norm): Phi3RMSNorm((3072,), eps=1e-05)
+      )
+      (lm_head): DecoupledLinear(
+        in_features=3072, out_features=32012, additional_out_features=3, bias=True, partially_freeze=True
+        (additional_fc): Linear(in_features=3072, out_features=3, bias=True)
+      )
+    )
+  )
+)
+
