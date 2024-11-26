@@ -12,11 +12,12 @@ class VideoSummarizationDataset(Dataset):
         """
         Load data from `self.data_path`.
         """
-    
+
     def _prepare_data(self):
         """
         Prepare data for inference.
         """
+
 
 def extract_image_features_and_save_them(image_path_list):
     """
