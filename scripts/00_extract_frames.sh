@@ -1,5 +1,5 @@
 #!/bin/bash
-dataset_dir="$HOME/workspace/TFVSN/data/TVSum"
+dataset_dir="$HOME/workspace/TFVSN/data/SumMe"
 
 # Set paths
 videos_dir="${dataset_dir}/videos"
