@@ -55,7 +55,7 @@ class TrainingFreeVideoSummarizationNetwork(nn.Module):
 
     def forward(self, video_data, prompt):
         """
-        Forward pass of the model. 
+        Forward pass of the model.
         输入为一个视频的所有图像帧和一个文本提示，输出为(LLM生成的文本序列, 提取得到的分数序列)
         """
         pass
