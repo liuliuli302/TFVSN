@@ -23,6 +23,9 @@ class TrainingFreeVideoSummarizationNetwork(nn.Module):
         self.model = AutoModelForVision2Seq.from_pretrained(
             model_name_or_path, trust_remote_code=True,
         )
+        
+        self.model = self.model.to("cuda")
+        
         tokenizer = AutoTokenizer.from_pretrained(
             model_name_or_path, trust_remote_code=True, use_fast=False, legacy=False
         )
@@ -51,7 +54,7 @@ class TrainingFreeVideoSummarizationNetwork(nn.Module):
             display.display(Image(filename=fn, width=300))
             image_list.append(
                 self.image_processor([img], image_aspect_ratio="anyres")["pixel_values"]
-                .to('cpu')
+                .cuda()
                 .bfloat16()
             )
             image_sizes.append(img.size)
@@ -82,7 +85,7 @@ class TrainingFreeVideoSummarizationNetwork(nn.Module):
             vision_attn_masks = None
         # If doing patch sampling, then flatten patches of shape [b, Np_i, v, d] -> [b*Np, v, d]
         # Same for attention masks: [b, Np, v] -> [b*Np, v]
-        if self.anyres_patch_sampling:
+        if self.model.vlm.anyres_patch_sampling:
             split_sizes = [feature.shape[0] for feature in vision_features]
             # Nested splits for multi-image samples.
             if isinstance(vision_x[0], list):
@@ -101,7 +104,7 @@ class TrainingFreeVideoSummarizationNetwork(nn.Module):
         vision_tokens = self.model.vlm.vision_tokenizer(vision_features, vision_attn_masks)
 
         # Post-processing: Split the batches into groups of patches and concatenate them together.
-        if self.vlm.anyres_patch_sampling:
+        if self.model.vlm.anyres_patch_sampling:
             assert isinstance(vision_x, list)
             if isinstance(vision_x[0], list):
                 vision_token_groups = torch.split(
@@ -180,10 +183,7 @@ if __name__ == "__main__":
     inputs = tf_model._get_vision_model_input(temp_input)
     out = tf_model._get_vision_tokens(
         vision_x=inputs["pixel_values"],
-        device="cpu",
+        device="cuda",
         image_size=inputs['image_sizes']
     )
- 
-    print(out.shape)
-    
-    print("HELLO WORLD!")
+
