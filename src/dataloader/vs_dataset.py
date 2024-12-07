@@ -26,6 +26,7 @@ class VideoSummarizationDataset(Dataset):
         # pprint(self.video_name_dict_inv)
 
     def _load_prompt(self):
+        # 加载提示文本
         context_prompt = "If you were a law enforcement agency, how would you rate the scene described on a scale from 0 to 1, with 0 representing a standard scene and 1 denoting a scene with suspicious activities?"
         format_prompt = "Please provide the response in the form of a Python list and respond with only one number in the provided list below [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] without any textual explanation. It should begin with '[' and end with ']'."
         summary_prompt = "Please summarize what happened in few sentences, based on the following temporal description of a scene. Do not include any unnecessary details or descriptions."
