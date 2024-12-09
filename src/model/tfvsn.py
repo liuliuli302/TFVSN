@@ -12,6 +12,7 @@ from transformers import (
 )
 import IPython.display as display
 from IPython.display import Image
+from tqdm import tqdm
 
 sys.path.append("/home/insight/workspace/TFVSN/src/")
 from dataloader import VideoSummarizationDataset
@@ -21,11 +22,12 @@ class TrainingFreeVideoSummarizationNetwork(nn.Module):
     def __init__(self, model_name_or_path):
         super(TrainingFreeVideoSummarizationNetwork, self).__init__()
         self.model = AutoModelForVision2Seq.from_pretrained(
-            model_name_or_path, trust_remote_code=True,
+            model_name_or_path,
+            trust_remote_code=True,
         )
-        
+
         self.model = self.model.to("cuda")
-        
+
         tokenizer = AutoTokenizer.from_pretrained(
             model_name_or_path, trust_remote_code=True, use_fast=False, legacy=False
         )
@@ -51,7 +53,6 @@ class TrainingFreeVideoSummarizationNetwork(nn.Module):
         image_sizes = []
         for fn in image_paths:
             img = PIL.Image.open(fn)
-            display.display(Image(filename=fn, width=300))
             image_list.append(
                 self.image_processor([img], image_aspect_ratio="anyres")["pixel_values"]
                 .cuda()
@@ -101,7 +102,9 @@ class TrainingFreeVideoSummarizationNetwork(nn.Module):
             vision_features = torch.cat(vision_features, dim=0)
             vision_features = vision_features[:, None, None, :, :]  # Expand dimensions.
             vision_attn_masks = torch.cat(vision_attn_masks, dim=0)
-        vision_tokens = self.model.vlm.vision_tokenizer(vision_features, vision_attn_masks)
+        vision_tokens = self.model.vlm.vision_tokenizer(
+            vision_features, vision_attn_masks
+        )
 
         # Post-processing: Split the batches into groups of patches and concatenate them together.
         if self.model.vlm.anyres_patch_sampling:
@@ -134,9 +137,37 @@ class TrainingFreeVideoSummarizationNetwork(nn.Module):
                         0, 2
                     )  # [Np, 1, v, d] -> [Np*v, d]
                     vision_tokens.append(
-                        patch_vis_tokens.unsqueeze(0)
+                        patch_vis_tokens.unsqueeze(0).to("cpu")
                     )  # Add the nt dimension.
         return vision_tokens
+
+    def extract_and_save_vison_feature(
+        self,
+        dataset_dir,
+        video_name,
+        frame_paths
+    ):
+        out_dict = {}
+        out_dir = Path(dataset_dir, "features")
+
+        if not out_dir.exists():
+            out_dir.mkdir()
+
+        out_file = Path(out_dir, f"{video_name}.pth")
+        
+        with torch.no_grad():
+            for frame_path in tqdm(frame_paths, desc=f"processing {video_name}"):
+                frame_path = Path(frame_path[0])
+                frame_name = frame_path.name.split(".")[0]
+                vision_input = self._get_vision_model_input([frame_path])
+                vision_feature = self._get_vision_tokens(
+                    vision_x=vision_input["pixel_values"],
+                    device="cuda",
+                    image_size=vision_input["image_sizes"],
+                )
+                out_dict[frame_name] = vision_feature[0]
+                # torch.cuda.empty_cache()
+        torch.save(out_dict, out_file)
 
     def _get_text_tokens(self, text):
         """
@@ -175,15 +206,17 @@ if __name__ == "__main__":
     model_path = "Salesforce/xgen-mm-phi3-mini-instruct-interleave-r-v1.5"
     tf_model = TrainingFreeVideoSummarizationNetwork(model_path)
     dataset = VideoSummarizationDataset()
+
     data_sample = dataset[0]
     frame_paths = data_sample["frame_file_paths"]
-
-    temp_input = frame_paths[0:2]
-    
-    inputs = tf_model._get_vision_model_input(temp_input)
-    out = tf_model._get_vision_tokens(
-        vision_x=inputs["pixel_values"],
-        device="cuda",
-        image_size=inputs['image_sizes']
+    keys = data_sample.keys()
+    tf_model.extract_and_save_vison_feature(
+        dataset_dir="/home/insight/workspace/TFVSN/data/SumMe",
+        video_name=data_sample["video_name"],
+        frames_path=data_sample["frame_file_paths"],
     )
 
+    # inputs = tf_model._get_vision_model_input(temp_input)
+    # out = tf_model._get_vision_tokens(
+    #     vision_x=inputs["pixel_values"], device="cuda", image_size=inputs["image_sizes"]
+    # )

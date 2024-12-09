@@ -47,9 +47,10 @@ class VideoSummarizationDataset(Dataset):
         # Convert picks to 6-digit integer.
         picks = [f"{pick:06d}" for pick in picks]
         # Gets all file names from picks.
-        frame_file_paths = [Path(video_frames_dir, f"{pick}.jpg") for pick in picks]
+        frame_file_paths = [str(Path(video_frames_dir, f"{pick}.jpg")) for pick in picks]
 
         video_info["frame_file_paths"] = frame_file_paths
+        video_info["video_name"] = video_name_real
 
         # Debug info.
         # pprint(frame_file_paths)
