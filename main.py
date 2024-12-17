@@ -72,18 +72,22 @@ def main():
 
 
 def extract_and_save_features():
+    dataset_name="TVSum"
+    
+    
+    
     model_path = "Salesforce/xgen-mm-phi3-mini-instruct-interleave-r-v1.5"
     tf_model = TrainingFreeVideoSummarizationNetwork(model_path).to("cuda").eval()
     dataset = VideoSummarizationDataset(
         root_path="./data",
-        dataset_name="SumMe",
+        dataset_name=dataset_name,
     )
     data_loader = DataLoader(dataset, batch_size=1, shuffle=False)
 
     print("Extracting and saving vision features...")
     for sample in tqdm(data_loader, desc="Extract and save vison features"):
         tf_model.extract_and_save_vison_feature(
-            dataset_dir="/home/insight/workspace/TFVSN/data/SumMe",
+            dataset_dir=f"/home/insight/workspace/TFVSN/data/{dataset_name}",
             video_name=sample["video_name"],
             frame_paths=sample["frame_file_paths"]
         )

@@ -141,20 +141,15 @@ class TrainingFreeVideoSummarizationNetwork(nn.Module):
                     )  # Add the nt dimension.
         return vision_tokens
 
-    def extract_and_save_vison_feature(
-        self,
-        dataset_dir,
-        video_name,
-        frame_paths
-    ):
+    def extract_and_save_vison_feature(self, dataset_dir, video_name, frame_paths):
         out_dict = {}
         out_dir = Path(dataset_dir, "features")
-
+        video_name = video_name[0]
         if not out_dir.exists():
             out_dir.mkdir()
 
         out_file = Path(out_dir, f"{video_name}.pth")
-        
+
         with torch.no_grad():
             for frame_path in tqdm(frame_paths, desc=f"processing {video_name}"):
                 frame_path = Path(frame_path[0])
@@ -165,8 +160,10 @@ class TrainingFreeVideoSummarizationNetwork(nn.Module):
                     device="cuda",
                     image_size=vision_input["image_sizes"],
                 )
-                out_dict[frame_name] = vision_feature[0]
-                # torch.cuda.empty_cache()
+                vision_feature = vision_feature[0][0]
+                vision_feature = torch.mean(vision_feature, dim=0)
+                out_dict[frame_name] = vision_feature
+                torch.cuda.empty_cache()
         torch.save(out_dict, out_file)
 
     def _get_text_tokens(self, text):
