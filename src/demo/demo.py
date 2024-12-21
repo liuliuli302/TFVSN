@@ -61,7 +61,9 @@ for sample in data:
         img = PIL.Image.open(fn)
         display.display(Image(filename=fn, width=300))
         image_list.append(
-            image_processor([img], image_aspect_ratio="anyres")["pixel_values"].cuda().bfloat16()
+            image_processor([img], image_aspect_ratio="anyres")["pixel_values"]
+            .cuda()
+            .bfloat16()
         )
         image_sizes.append(img.size)
     inputs = {"pixel_values": [image_list]}
