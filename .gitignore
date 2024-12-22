@@ -36,8 +36,6 @@ temp/
 
 # data folder
 data/
-dataset/
-datasets/
 
 # training folder
 wandb
