@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 import cv2
- 
+
 
 def extract_frames(video_path, frames_dir):
     video_name = Path(video_path).stem
