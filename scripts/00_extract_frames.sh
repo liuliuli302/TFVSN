@@ -1,5 +1,5 @@
 #!/bin/bash
-dataset_dir="$HOME/autodl-tmp/data/SumMe"
+dataset_dir="$HOME/autodl-tmp/data/TVSum"
 
 # Set paths
 videos_dir="${dataset_dir}/videos"
