@@ -30,16 +30,17 @@ def load_video(video_path, max_frames_num,fps=1,force_sample=False):
     spare_frames = vr.get_batch(frame_idx).asnumpy()
     # import pdb;pdb.set_trace()
     return spare_frames,frame_time,video_time
+
 pretrained = "lmms-lab/LLaVA-Video-7B-Qwen2"
 model_name = "llava_qwen"
 device = "cuda"
 device_map = "auto"
 tokenizer, model, image_processor, max_length = load_pretrained_model(pretrained, None, model_name, torch_dtype="bfloat16", device_map=device_map)  # Add any other thing you want to pass in llava_model_args
 model.eval()
-video_path = "XXXX"
+video_path = "/root/autodl-tmp/data/SumMe/videos/Notre_Dame.mp4"
 max_frames_num = 64
 video,frame_time,video_time = load_video(video_path, max_frames_num, 1, force_sample=True)
-video = image_processor.preprocess(video, return_tensors="pt")["pixel_values"].cuda().half()
+video = image_processor.preprocess(video, return_tensors="pt")["pixel_values"].cuda().bfloat16()
 video = [video]
 conv_template = "qwen_1_5"  # Make sure you use correct chat template for different models
 time_instruciton = f"The video lasts for {video_time:.2f} seconds, and {len(video[0])} frames are uniformly sampled from it. These frames are located at {frame_time}.Please answer the following questions related to this video."
