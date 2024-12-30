@@ -37,7 +37,7 @@ device = "cuda"
 device_map = "auto"
 tokenizer, model, image_processor, max_length = load_pretrained_model(pretrained, None, model_name, torch_dtype="bfloat16", device_map=device_map)  # Add any other thing you want to pass in llava_model_args
 model.eval()
-video_path = "/root/autodl-tmp/data/SumMe/videos/Notre_Dame.mp4"
+video_path = "/root/autodl-tmp/data/TVSum/videos/Bhxk-O1Y7Ho.mp4"
 max_frames_num = 64
 video,frame_time,video_time = load_video(video_path, max_frames_num, 1, force_sample=True)
 video = image_processor.preprocess(video, return_tensors="pt")["pixel_values"].cuda().bfloat16()
