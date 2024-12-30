@@ -37,19 +37,23 @@ device = "cuda"
 device_map = "auto"
 tokenizer, model, image_processor, max_length = load_pretrained_model(pretrained, None, model_name, torch_dtype="bfloat16", device_map=device_map)  # Add any other thing you want to pass in llava_model_args
 model.eval()
-video_path = "/root/autodl-tmp/data/TVSum/videos/Bhxk-O1Y7Ho.mp4"
+video_path = "/home/insight/workspace/TFVSN/data/TVSum/videos/0tmA_C6XwfM.mp4"
 max_frames_num = 64
 video,frame_time,video_time = load_video(video_path, max_frames_num, 1, force_sample=True)
+
 video = image_processor.preprocess(video, return_tensors="pt")["pixel_values"].cuda().bfloat16()
 video = [video]
 conv_template = "qwen_1_5"  # Make sure you use correct chat template for different models
 time_instruciton = f"The video lasts for {video_time:.2f} seconds, and {len(video[0])} frames are uniformly sampled from it. These frames are located at {frame_time}.Please answer the following questions related to this video."
+
 question = DEFAULT_IMAGE_TOKEN + f"\n{time_instruciton}\nPlease describe this video in detail."
 conv = copy.deepcopy(conv_templates[conv_template])
 conv.append_message(conv.roles[0], question)
 conv.append_message(conv.roles[1], None)
 prompt_question = conv.get_prompt()
+
 input_ids = tokenizer_image_token(prompt_question, tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt").unsqueeze(0).to(device)
+
 cont = model.generate(
     input_ids,
     images=video,
