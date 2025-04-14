@@ -1,15 +1,19 @@
-import copy
-import json
-import warnings
-import numpy as np
-from PIL import Image
-from pathlib import Path
-from decord import VideoReader, cpu
-from llava.conversation import conv_templates
-from llava.mm_utils import tokenizer_image_token
-from llava.model.builder import load_pretrained_model
-from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN
 # pip install git+https://github.com/LLaVA-VL/LLaVA-NeXT.git
+import json
+from llava.model.builder import load_pretrained_model
+from llava.mm_utils import get_model_name_from_path, process_images, tokenizer_image_token
+from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, IGNORE_INDEX
+from llava.conversation import conv_templates, SeparatorStyle
+from PIL import Image
+import requests
+import copy
+import torch
+import sys
+import warnings
+from decord import VideoReader, cpu
+import numpy as np
+warnings.filterwarnings("ignore")
+from pathlib import Path
 
 # 从image path list中加载image
 def load_images_from_paths(paths):
@@ -38,16 +42,15 @@ def load_video(video_path, max_frames_num,fps=1,force_sample=False):
     return spare_frames,frame_time,video_time
 
 # 1 加载模型
-# warnings.filterwarnings("ignore")
 pretrained = "lmms-lab/LLaVA-Video-7B-Qwen2"
 model_name = "llava_qwen"
 device = "cuda"
 device_map = "auto"
-tokenizer, model, image_processor, max_length = load_pretrained_model(pretrained, None, model_name, torch_dtype="bfloat16", device_map=device_map)  # Add any other thing you want to pass in llava_model_args
-model = model.eval()
+tokenizer, model, image_processor, max_length = load_pretrained_model(pretrained, None, model_name, torch_dtype="float16", device_map=device_map)  # Add any other thing you want to pass in llava_model_args
+model.eval()
 
 # 2 加载数据
-dataset_dir = Path("/root/TFVSN/dataset")
+dataset_dir = Path("dataset")
 json_files = [
     Path(dataset_dir,"SumMe","summe_dataset_jump.json"),
     Path(dataset_dir,"SumMe","summe_dataset_turn.json"),
@@ -67,7 +70,7 @@ for dataset in json_files:
         prompt = sample["prompt"]
         prompt = "HOW MANY FRAMES I GIVE TO YOU?"
         # prompt = "Please describe the video content in detail."
-        images = image_processor.preprocess(images, return_tensors="pt")["pixel_values"].cuda().bfloat16()
+        images = image_processor.preprocess(images, return_tensors="pt")["pixel_values"].cuda().half()
         images = [images]
         
         conv_template = "qwen_1_5"  # Make sure you use correct chat template for different models
