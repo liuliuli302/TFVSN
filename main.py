@@ -6,8 +6,8 @@ import IPython.display as display
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from src.dataloader import VideoSummarizationDataset
-from src.model import TrainingFreeVideoSummarizationNetwork
+from dataloader import VideoSummarizationDataset
+from model import TrainingFreeVideoSummarizationNetwork
 
 
 def extract_and_save_features():
