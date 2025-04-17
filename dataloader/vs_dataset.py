@@ -24,13 +24,6 @@ class VideoSummarizationDataset(Dataset):
         # Invert the values and keys in the self.video_name_dict
         self.video_name_dict_inv = {v: k for k, v in self.video_name_dict.items()}
         # pprint(self.video_name_dict_inv)
-
-    def _load_prompt(self):
-        # 加载提示文本
-        context_prompt = "If you were a law enforcement agency, how would you rate the scene described on a scale from 0 to 1, with 0 representing a standard scene and 1 denoting a scene with suspicious activities?"
-        format_prompt = "Please provide the response in the form of a Python list and respond with only one number in the provided list below [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] without any textual explanation. It should begin with '[' and end with ']'."
-        summary_prompt = "Please summarize what happened in few sentences, based on the following temporal description of a scene. Do not include any unnecessary details or descriptions."
-        
         
     def __len__(self):
         return len(self.video_name_dict)
@@ -89,13 +82,6 @@ def hdf5_to_dict(hdf5_file):
             raise TypeError("Unsupported h5py object type")
 
     return recursively_convert(hdf5_file)
-
-
-def extract_image_features_and_save_them(image_path_list):
-    """
-    提取图像特征并保存到文件中
-    """
-    pass
 
 
 if __name__ == "__main__":

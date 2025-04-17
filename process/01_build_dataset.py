@@ -73,7 +73,7 @@ def apply_conversation_template(llm_name, num_images, prompt):
         ]
     return conversation
 
-def main(data_dir):
+def main(data_dir, save_dir):
     # 1 读取基本信息
     # data_dir = "/home/insight/workspace/TFVSN/data"
     
@@ -209,8 +209,8 @@ def main(data_dir):
             dataset_samples_jump_tvsum.append(sample)
 
     # 3 保存dataset
-    out_dir_summe = Path("dataset/SumMe")
-    out_dir_tvsum = Path("dataset/TVSum")
+    out_dir_summe = Path(save_dir, "SumMe")
+    out_dir_tvsum = Path(save_dir, "TVSum")
     out_dir_summe.mkdir(parents=True, exist_ok=True)
     out_dir_tvsum.mkdir(parents=True, exist_ok=True)
 
@@ -233,11 +233,15 @@ def main(data_dir):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--data_dir",
+        "--dataset_dir",
         type=str,
         required=True,
         help="Directory path to the videos.",
-        default="/root/autodl-tmp/data/"
+    )
+    parser.add_argument(
+        "--dataset_save_dir",
+        type=str,
+        required=True,
     )
     args = parser.parse_args()
     return args
@@ -245,5 +249,5 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    main(args.data_dir)
+    main(args.dataset_dir, args.dataset_save_dir)
 
