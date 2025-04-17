@@ -73,7 +73,7 @@ def apply_conversation_template(llm_name, num_images, prompt):
         ]
     return conversation
 
-def main(data_dir, save_dir):
+def main(data_dir, save_dir, clip_length):
     # 1 读取基本信息
     # data_dir = "/home/insight/workspace/TFVSN/data"
     
@@ -109,8 +109,6 @@ def main(data_dir, save_dir):
 
     summe_videos = summe_dict.keys()
     tvsum_videos = tvsum_dict.keys()
-
-    clip_length = 10
 
     from decord import VideoReader, cpu
 
@@ -243,11 +241,16 @@ def parse_args():
         type=str,
         required=True,
     )
+    parser.add_argument(
+        "--clip_length",
+        type=int,
+        default=5,
+    )
     args = parser.parse_args()
     return args
 
 
 if __name__ == "__main__":
     args = parse_args()
-    main(args.dataset_dir, args.dataset_save_dir)
+    main(args.dataset_dir, args.dataset_save_dir, args.clip_length)
 

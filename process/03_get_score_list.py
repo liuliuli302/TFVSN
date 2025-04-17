@@ -32,11 +32,11 @@ def hdf5_to_dict(hdf5_file):
         return recursively_convert_to_dict(f)
 
 
-def main(result_dir, dataset_dir):
-    
+def main(result_dir, dataset_dir, scores_dir):
+
     result_dir = Path(result_dir)
     dataset_dir = Path(dataset_dir)
-    
+
     # 1 加载数据
     result_file_list = [
         result_dir / "summe_dataset_jump_result.json",
@@ -98,11 +98,24 @@ def main(result_dir, dataset_dir):
                 check_out.append(0)
             # 写入score_list
             scores_list_tmp[video_name][index] = scores
+            
+        #  将 score 转换为 list 方便后面保存到 json
+        for video_name in scores_list_tmp:
+            scores_list_tmp[video_name] = scores_list_tmp[video_name].tolist()
+        
         check_out = np.array(check_out)
         right = check_out.sum()
         length = len(check_out)
         print(f"rate:{right}/{length}")
         result_list[file_name] = scores_list_tmp
+
+    # 4 保存score_list
+    scores_dir = Path(scores_dir)
+    scores_dir.mkdir(parents=True, exist_ok=True)
+
+    scores_json = Path(scores_dir, "raw_llm_out_scores.json")
+    with open(scores_json, "w") as f:
+        json.dump(result_list, f, separators=(",", ": "), indent=4)
 
 
 def parse_args():
@@ -115,10 +128,14 @@ def parse_args():
         "--dataset_dir",
         type=str,
     )
+    parser.add_argument(
+        "--scores_dir",
+        type=str,
+    )
     args = parser.parse_args()
     return args
 
 
 if __name__ == "__main__":
     args = parse_args()
-    main(args.result_dir, args.dataset_dir)
+    main(args.result_dir, args.dataset_dir, args.scores_dir)

@@ -1,6 +1,4 @@
 import numpy as np
-
-
 def knapSack(W, wt, val, n):
     K = [[0 for _ in range(W + 1)] for _ in range(n + 1)]
 
