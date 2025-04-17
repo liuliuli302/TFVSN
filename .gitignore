@@ -36,6 +36,9 @@ temp/
 
 # data folder
 data/
+dataset/
+out/
+
 
 # training folder
 wandb
@@ -46,9 +49,6 @@ checkpoints
 checkpoints/
 work_dirs*/
 
-# evaluation folder
-/eval
-/eval*
 
 # pretrained weights
 pretrained/
