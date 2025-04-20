@@ -3,35 +3,29 @@ import os
 from pathlib import Path
 import cv2
 
+
 def extract_frames(video_path, frames_dir):
     video_name = Path(video_path).stem
-
     video_frames_dir = os.path.join(frames_dir, video_name)
     os.makedirs(video_frames_dir, exist_ok=True)
-
     cap = cv2.VideoCapture(video_path)
-
     frame_count = 0
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
-
         frame_path = os.path.join(video_frames_dir, f"{frame_count:06d}.jpg")
-
         cv2.imwrite(frame_path, frame)
-
         frame_count += 1
-
     cap.release()
-    print(f"Extracted {frame_count} frames from {video_path} to {video_frames_dir}")
+    print(
+        f"Extracted {frame_count} frames from {video_path} to {video_frames_dir}")
     return video_name, frame_count
 
 
 def main(videos_dir, frames_dir, annotations_file):
     os.makedirs(frames_dir, exist_ok=True)
     os.makedirs(os.path.dirname(annotations_file), exist_ok=True)
-
     with open(annotations_file, "w") as f:
         # Loop through all the video files in the video directory
         for video_file in os.listdir(videos_dir):
