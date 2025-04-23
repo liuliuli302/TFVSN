@@ -1,7 +1,6 @@
 from PIL import Image
-import requests
-from transformers import Blip2Processor, Blip2Model
 import torch
+from transformers import Blip2Processor, Blip2Model
 from decord import VideoReader, cpu
 import numpy as np
 import math
@@ -12,7 +11,7 @@ from tqdm import tqdm
 # 设备设置
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# 加载BLIP - 2模型和处理器，使用float32精度
+# 加载BLIP-2模型和处理器，使用float32精度
 processor = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b")
 model = Blip2Model.from_pretrained(
     "Salesforce/blip2-opt-2.7b", torch_dtype=torch.float32)
@@ -30,7 +29,6 @@ def extract_and_save_features(video_folder, output_folder, stride=1, batch_size=
     video_files = [video_file for video_file in video_files if video_file.suffix in [
         '.mp4', '.avi', '.mov']]
 
-    # 外层tqdm：显示视频处理进度
     for video_file in tqdm(video_files, desc="Processing videos", unit="video"):
         vr = VideoReader(str(video_file), ctx=cpu(0))
         frame_count = len(vr)
@@ -40,45 +38,56 @@ def extract_and_save_features(video_folder, output_folder, stride=1, batch_size=
         frames = vr.get_batch(indices).asnumpy()
 
         all_features = []
-        # 使用 math.ceil 计算总批次数量
         num_batches = math.ceil(len(frames) / batch_size)
 
-        # 内层tqdm：显示每个视频内批次处理进度
         for batch_idx in tqdm(range(num_batches), desc=f"Processing batches in {video_file.name}", unit="batch", leave=False):
             start_idx = batch_idx * batch_size
             end_idx = min(start_idx + batch_size, len(frames))
             batch_frames = frames[start_idx:end_idx]
 
             batch_images = [Image.fromarray(frame) for frame in batch_frames]
-            # 处理图像，使用float32精度
             inputs = processor(images=batch_images, return_tensors="pt").to(
                 device, torch.float32)
 
-            # 使用get_qformer_features获取特征
-            outputs = model.get_qformer_features(
+            # 替代 get_qformer_features：手动执行 vision -> qformer -> language projection
+            vision_outputs = model.vision_model(
                 pixel_values=inputs.pixel_values)
-            batch_features = outputs.last_hidden_state.squeeze().cpu().numpy()
+            image_embeds = vision_outputs[0]
 
-            if len(batch_features.shape) == 1:
-                batch_features = batch_features[np.newaxis, :]
+            image_attention_mask = torch.ones(
+                image_embeds.size()[:-1], dtype=torch.long, device=image_embeds.device)
+            query_tokens = model.query_tokens.expand(
+                image_embeds.shape[0], -1, -1)
+
+            qformer_outputs = model.qformer(
+                query_embeds=query_tokens,
+                encoder_hidden_states=image_embeds,
+                encoder_attention_mask=image_attention_mask,
+                return_dict=True
+            )
+            query_output = qformer_outputs.last_hidden_state
+
+            projected_features = model.language_projection(query_output)
+
+            if projected_features.dtype != image_embeds.dtype:
+                projected_features = projected_features.to(image_embeds.dtype)
+
+            batch_features = projected_features.cpu().numpy()
             all_features.append(batch_features)
 
-        # 拼接所有批次的特征
         final_features = np.concatenate(all_features, axis=0)
 
-        # 保存特征到一个文件
         video_name = video_file.stem
         feature_file = output_folder / f'{video_name}.npy'
         np.save(feature_file, final_features)
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description='Video frame feature extraction')
-    parser.add_argument('--video_folder', type=str)
-    parser.add_argument('--output_folder', type=str)
-    parser.add_argument('--stride', type=int)
-    parser.add_argument('--batch_size', type=int)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--video_folder', type=str, required=True)
+    parser.add_argument('--output_folder', type=str, required=True)
+    parser.add_argument('--stride', type=int, default=1)
+    parser.add_argument('--batch_size', type=int, default=16)
     return parser.parse_args()
 
 
