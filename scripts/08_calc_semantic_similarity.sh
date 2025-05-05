@@ -1,6 +1,6 @@
 visual_feature_dir=$HOME/autodl-tmp/data/SumMe/features/visual
 text_feature_dir=$HOME/autodl-tmp/data/SumMe/features/text
-segment_num=4
+segment_num=20
 out_put_dir=$HOME/TFVSN/dataset/result/similarity_scores/SumMe
 
 
