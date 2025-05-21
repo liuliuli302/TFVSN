@@ -1,5 +1,6 @@
 flash-attn
 decord
+tqdm>=4.66.1
 absl-py==2.1.0
 accelerate==1.1.1
 asttokens==2.4.1

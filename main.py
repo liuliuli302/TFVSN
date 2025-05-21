@@ -69,7 +69,8 @@ def create_pipeline(config):
     if config.get("run_llm_analysis", True):
         pipeline.add_step(
             LLMAnalysisStep("llm_analysis", llm_handler, {
-                "result_dir": config.get("result_dir", "results")
+                "result_dir": config.get("result_dir", "results"),
+                # 不再使用batch_size参数
             })
         )
     
@@ -83,7 +84,9 @@ def create_pipeline(config):
     
     if config.get("evaluate", True):
         pipeline.add_step(
-            EvaluationStep("evaluation", None)
+            EvaluationStep("evaluation", None, {
+                "eval_dir": Path(config.get("output_dir", "output")) / "evaluation"
+            })
         )
     
     # 设置上下文数据
@@ -117,18 +120,7 @@ def load_config(config_path):
 def parse_args():
     """解析命令行参数"""
     parser = argparse.ArgumentParser(description="视频摘要系统")
-    parser.add_argument("--config", type=str, help="配置文件路径")
-    parser.add_argument("--video_path", type=str, help="视频路径")
-    parser.add_argument("--data_dir", type=str, help="数据目录")
-    parser.add_argument("--output_dir", type=str, default="output", help="输出目录")
-    parser.add_argument("--mode", type=str, choices=["both", "turn", "jump"], default="both", 
-                        help="采样模式：turn(连续帧)，jump(跳帧)，both(两者都有)")
-    parser.add_argument("--skip_video", action="store_true", help="跳过视频处理步骤")
-    parser.add_argument("--skip_samples", action="store_true", help="跳过样本构建步骤")
-    parser.add_argument("--skip_llm", action="store_true", help="跳过LLM分析步骤")
-    parser.add_argument("--skip_cleaning", action="store_true", help="跳过数据清理步骤")
-    parser.add_argument("--skip_eval", action="store_true", help="跳过评估步骤")
-    
+    parser.add_argument("--config", type=str, default="config_pipeline.json", help="配置文件路径")
     return parser.parse_args()
 
 
@@ -140,22 +132,9 @@ def main():
     # 加载配置
     config = load_config(args.config)
     
-    # 用命令行参数覆盖配置文件
-    if args.video_path:
-        config["video_path"] = args.video_path
-    if args.data_dir:
-        config["data_dir"] = args.data_dir
-    if args.output_dir:
-        config["output_dir"] = args.output_dir
-    if args.mode:
-        config["mode"] = args.mode
-    
-    # 处理跳过标志
-    config["process_video"] = not args.skip_video
-    config["build_samples"] = not args.skip_samples
-    config["run_llm_analysis"] = not args.skip_llm
-    config["clean_data"] = not args.skip_cleaning
-    config["evaluate"] = not args.skip_eval
+    # 确保输出目录存在
+    output_dir = config.get("output_dir", "output")
+    os.makedirs(output_dir, exist_ok=True)
     
     # 确保输出目录存在
     output_dir = config.get("output_dir", "output")

@@ -5,6 +5,7 @@ import h5py
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from decord import VideoReader, cpu
+from tqdm import tqdm
 
 class SamplesBuilder(Dataset):
     """适用于VideoSummarizationPipeline的样本构建器，其本质是一个torch语境下的Dataset
@@ -62,8 +63,8 @@ class SamplesBuilder(Dataset):
             }
         }
         
-        # 处理每个数据集
-        for dataset_name, paths in datasets.items():
+        # 处理每个数据集，添加进度条
+        for dataset_name, paths in tqdm(datasets.items(), desc="Processing datasets", unit="dataset"):
             self._process_dataset(dataset_name, paths)
             
     def _process_dataset(self, dataset_name, paths):
@@ -73,8 +74,8 @@ class SamplesBuilder(Dataset):
         name_dict = self._load_json(paths["json_path"])
         name_dict_reverse = {v: k for k, v in name_dict.items()}
         
-        # 处理每个视频
-        for video_name in dataset_dict.keys():
+        # 处理每个视频，添加进度条
+        for video_name in tqdm(dataset_dict.keys(), desc=f"Processing videos in {dataset_name}", unit="video"):
             video_name_real = name_dict_reverse[video_name]
             frames_dir = Path(paths["frame_dir"], video_name_real)
             video_path = Path(paths["video_dir"], f"{video_name_real}.mp4")
@@ -102,8 +103,8 @@ class SamplesBuilder(Dataset):
         else:
             clips, remainder = self._get_clips_jump(picks, self.clip_length)
             
-        # 处理每个片段
-        for i, clip in enumerate(clips):
+        # 处理每个片段，添加进度条
+        for i, clip in enumerate(tqdm(clips, desc=f"Building {clip_type} clips for {video_name}", unit="clip", leave=False)):
             # 计算帧时间
             frame_time = [frame / video_info["fps"] for frame in clip]
             frame_time_str = ",".join([f"{t:.2f}s" for t in frame_time])
@@ -179,6 +180,16 @@ class SamplesBuilder(Dataset):
     def __getitem__(self, idx):
         """返回指定索引的样本"""
         return self.samples[idx]
+        
+    def __call__(self, data_dir, clip_length=5, mode="both"):
+        """使类实例可调用，返回自身实例
+        Args:
+            data_dir: 数据目录
+            clip_length: 剪辑长度
+            mode: 模式
+        """
+        print(f"Building samples from {data_dir} (mode: {mode}, clip_length: {clip_length})...")
+        return self
     
 
 # 测试代码

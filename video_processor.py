@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from typing import Dict, Tuple, Union, List
 from config import VideoProcessorConfig
+from tqdm import tqdm
 
 
 class VideoProcessor:
@@ -130,24 +131,28 @@ class VideoProcessor:
             int: 提取的帧数
         """
         cap = cv2.VideoCapture(video_path)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         frame_count = 0
         saved_count = 0
         
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
-                
-            if frame_count % sample_rate == 0:
-                # 调整分辨率（如果需要）
-                if frame.shape[:2] != self.resolution:
-                    frame = cv2.resize(frame, self.resolution)
+        # 使用tqdm创建进度条
+        with tqdm(total=total_frames, desc=f"Extracting frames from {Path(video_path).name}", unit="frames") as pbar:
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret:
+                    break
                     
-                frame_path = os.path.join(save_dir, f"{saved_count:06d}.jpg")
-                cv2.imwrite(frame_path, frame)
-                saved_count += 1
-                
-            frame_count += 1
+                if frame_count % sample_rate == 0:
+                    # 调整分辨率（如果需要）
+                    if frame.shape[:2] != self.resolution:
+                        frame = cv2.resize(frame, self.resolution)
+                        
+                    frame_path = os.path.join(save_dir, f"{saved_count:06d}.jpg")
+                    cv2.imwrite(frame_path, frame)
+                    saved_count += 1
+                    
+                frame_count += 1
+                pbar.update(1)
             
         cap.release()
         print(f"Extracted {saved_count} frames from {video_path} to {save_dir}")
